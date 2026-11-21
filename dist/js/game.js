@@ -138,12 +138,15 @@ export class Game {
     }
   }
   handleKey(event) {
-    if(this.state==='paused') {if(event.key==='Escape'||event.key.toLowerCase()==='p'){event.preventDefault();this.resume();}return;}
-    if(this.state!=='running')return; if(event.ctrlKey||event.altKey||event.metaKey||event.repeat)return;
+    const isPauseKey=event.code==='Space'||event.key===' ';
+    if(event.ctrlKey||event.altKey||event.metaKey)return;
+    if(event.repeat){if(isPauseKey&&['running','transition','paused'].includes(this.state))event.preventDefault();return;}
+    if(this.state==='paused') {if(event.key==='Escape'||isPauseKey){event.preventDefault();this.resume();}return;}
+    if(isPauseKey&&(this.state==='running'||this.state==='transition')){event.preventDefault();this.pause();return;}
+    if(this.state!=='running')return;
     if(event.key==='Escape'||event.key==='Backspace') {
       event.preventDefault(); if(this.target){this.target=null;this.callbacks.onToast?.(t(this.settings.uiLanguage,'targetReleased'),'');}else if(event.key==='Escape')this.pause(); return;
     }
-    if(event.key.toLowerCase()==='p'){event.preventDefault();this.pause();return;}
     if(Array.from(event.key).length!==1)return;
     event.preventDefault(); this.typeCharacter(event.key);
   }

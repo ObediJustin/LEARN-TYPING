@@ -60,7 +60,7 @@ Cette commande vérifie la syntaxe des modules, les traductions, les 12 dictionn
 - Lettres : verrouiller et frapper une cible
 - Retour arrière : libérer la cible
 - Échap : libérer la cible ou mettre en pause
-- P : mettre en pause
+- Espace : mettre en pause ou reprendre la partie
 
 ## Déploiement
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 import { LANGUAGES, TEXT } from '../dist/js/data.js';
 import { WordManager, progressionWeights } from '../dist/js/word-manager.js';
+import { Game } from '../dist/js/game.js';
 
 const root = new URL('../', import.meta.url);
 const html = await readFile(new URL('dist/index.html', root), 'utf8');
@@ -58,5 +59,13 @@ memory.set('learn_typing_save_v1',JSON.stringify({version:1,settings:{language:'
 const {StorageService}=await import('../dist/js/services.js');const storage=new StorageService();
 assert.equal(storage.data.version,2);assert.equal(storage.data.settings.uiLanguage,'en');assert.equal(storage.data.settings.typingLanguage,'en');assert.ok(storage.data.scores['en:classic:normal']);
 storage.recordWordMistake('en','keyboard','intermediate');storage.recordWordSuccess('en','keyboard','intermediate');assert.equal(storage.data.vocabulary.en.keyboard.incorrect,1);assert.equal(storage.data.vocabulary.en.keyboard.correct,1);
+
+for(const mode of ['classic','survival','time','practice']){
+  const game=Object.create(Game.prototype);game.state='running';game.settings={mode,uiLanguage:'fr'};game.callbacks={};game.target=null;let typed='';game.typeCharacter=character=>{typed=character;};
+  const space={key:' ',code:'Space',ctrlKey:false,altKey:false,metaKey:false,repeat:false,prevented:false,preventDefault(){this.prevented=true;}};
+  game.handleKey(space);assert.equal(game.state,'paused',`${mode}: Space should pause`);assert.equal(space.prevented,true,`${mode}: Space should prevent scrolling`);
+  const resume={...space,prevented:false,preventDefault:space.preventDefault};game.handleKey(resume);assert.equal(game.state,'running',`${mode}: Space should resume`);
+  const letterP={key:'p',code:'KeyP',ctrlKey:false,altKey:false,metaKey:false,repeat:false,prevented:false,preventDefault:space.preventDefault};game.handleKey(letterP);assert.equal(typed,'p',`${mode}: P should remain a typing key`);
+}
 
 console.log(`Validated ${ids.length} UI ids, ${translationKeys.size} translated labels, 12 dictionaries and ${totalWords} sourced words.`);
