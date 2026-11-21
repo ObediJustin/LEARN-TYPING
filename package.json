@@ -1,0 +1,10 @@
+{
+  "name": "learn-typing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LEARN_TYPING — bilingual neon typing arcade game",
+  "scripts": {
+    "serve": "npx serve dist",
+    "check": "node --check dist/js/game.js && node --check dist/js/main.js"
+  }
+}

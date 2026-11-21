@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050816">
+  <meta name="description" content="LEARN_TYPING, un jeu d'arcade bilingue pour gagner en vitesse et en précision au clavier.">
+  <title>LEARN_TYPING — Neon Typing Defense</title>
+  <link rel="icon" href="./favicon.svg">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <canvas id="gameCanvas" aria-label="Zone de jeu LEARN_TYPING"></canvas>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <header id="hud" class="hud is-hidden" aria-live="polite">
+      <div class="hud-cluster hud-primary">
+        <div class="brand-mini"><span class="brand-mark">LT</span><span>LEARN_TYPING</span></div>
+        <div class="hud-stat score-stat"><span data-i18n="score">Score</span><strong id="scoreValue">000000</strong></div>
+        <div class="hud-stat"><span data-i18n="wave">Vague</span><strong id="waveValue">01</strong></div>
+      </div>
+      <div class="hud-cluster hud-metrics">
+        <div class="hud-stat"><span data-i18n="combo">Combo</span><strong id="comboValue">×1</strong></div>
+        <div class="hud-stat"><span>WPM</span><strong id="wpmValue">0</strong></div>
+        <div class="hud-stat"><span data-i18n="accuracy">Précision</span><strong id="accuracyValue">100%</strong></div>
+        <div id="timerStat" class="hud-stat is-hidden"><span data-i18n="time">Temps</span><strong id="timerValue">60</strong></div>
+      </div>
+      <div class="hud-actions">
+        <div id="powerupBadge" class="powerup-badge is-hidden"><span id="powerupIcon">✦</span><span id="powerupText"></span></div>
+        <button id="soundBtn" class="icon-btn" type="button" aria-label="Son">◉</button>
+        <button id="pauseBtn" class="icon-btn" type="button" aria-label="Pause">Ⅱ</button>
+      </div>
+    </header>
+
+    <main id="menu" class="screen menu-screen">
+      <div class="menu-layout">
+        <section class="hero-panel">
+          <div class="eyebrow"><span class="live-dot"></span><span data-i18n="trainingSystem">SYSTÈME D’ENTRAÎNEMENT ACTIF</span></div>
+          <h1 class="logo" aria-label="LEARN TYPING"><span>LEARN</span><span>TYPING</span></h1>
+          <p class="tagline" data-i18n="tagline">Tape vite. Vise juste. Progresse.</p>
+          <div class="ship-emblem" aria-hidden="true">
+            <div class="emblem-ring ring-one"></div><div class="emblem-ring ring-two"></div>
+            <svg viewBox="0 0 180 180"><path d="M90 28 151 141l-61-25-61 25z"/><path d="m90 49 28 74-28-16-28 16z"/><circle cx="90" cy="97" r="9"/></svg>
+          </div>
+          <div class="hero-note"><span>01</span><p data-i18n="heroNote">Défends le réseau, une lettre à la fois.</p></div>
+        </section>
+
+        <section class="control-panel" aria-labelledby="setupTitle">
+          <div class="panel-heading">
+            <span class="section-index">CONFIG</span>
+            <div><h2 id="setupTitle" data-i18n="missionSetup">Configuration de mission</h2><p data-i18n="setupHint">Choisis ton rythme et lance la séquence.</p></div>
+          </div>
+          <div class="field-row">
+            <label class="field"><span data-i18n="language">Langue</span><select id="languageSelect"><option value="fr">Français</option><option value="en">English</option></select></label>
+            <label class="field"><span data-i18n="difficulty">Difficulté</span><select id="difficultySelect"><option value="rookie" data-i18n="rookie">Recrue</option><option value="normal" data-i18n="normal">Normal</option><option value="expert" data-i18n="expert">Expert</option></select></label>
+          </div>
+          <fieldset class="mode-picker">
+            <legend data-i18n="gameMode">Mode de jeu</legend>
+            <label class="mode-card"><input type="radio" name="mode" value="classic" checked><span class="mode-icon">◈</span><span><strong data-i18n="classic">Classique</strong><small data-i18n="classicDesc">Vagues progressives</small></span></label>
+            <label class="mode-card"><input type="radio" name="mode" value="survival"><span class="mode-icon">∞</span><span><strong data-i18n="survival">Survie</strong><small data-i18n="survivalDesc">Tiens le plus longtemps</small></span></label>
+            <label class="mode-card"><input type="radio" name="mode" value="time"><span class="mode-icon">◷</span><span><strong data-i18n="timeAttack">Chrono</strong><small data-i18n="timeDesc">60 secondes intenses</small></span></label>
+            <label class="mode-card"><input type="radio" name="mode" value="practice"><span class="mode-icon">⌁</span><span><strong data-i18n="practice">Entraînement</strong><small data-i18n="practiceDesc">Sans pression</small></span></label>
+          </fieldset>
+          <button id="playBtn" class="primary-btn" type="button"><span data-i18n="launch">Lancer la mission</span><kbd>ENTRÉE</kbd></button>
+          <nav class="menu-links" aria-label="Options">
+            <button type="button" data-modal="how"><span>?</span><span data-i18n="howToPlay">Comment jouer</span></button>
+            <button type="button" data-modal="scores"><span>⌁</span><span data-i18n="highScores">Meilleurs scores</span></button>
+            <button type="button" data-modal="settings"><span>⚙</span><span data-i18n="settings">Réglages</span></button>
+          </nav>
+        </section>
+      </div>
+      <footer class="menu-footer"><span>LEARN_TYPING // BUILD 1.0</span><span data-i18n="keyboardReady">CLAVIER DÉTECTÉ · SYSTÈME PRÊT</span></footer>
+    </main>
+
+    <section id="waveBanner" class="wave-banner is-hidden" aria-live="assertive"><span data-i18n="wave">Vague</span><strong id="waveBannerValue">1</strong><small data-i18n="getReady">Prépare-toi</small></section>
+
+    <section id="pauseScreen" class="screen overlay-screen is-hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+      <div class="modal-card pause-card"><span class="eyebrow" data-i18n="systemPaused">SYSTÈME EN PAUSE</span><h2 id="pauseTitle" data-i18n="paused">Mission suspendue</h2><p data-i18n="pauseHint">Respire. Le chronomètre et les ennemis sont figés.</p><div class="button-stack"><button id="resumeBtn" class="primary-btn" type="button" data-i18n="resume">Reprendre</button><button id="restartBtn" class="secondary-btn" type="button" data-i18n="restart">Recommencer</button><button class="secondary-btn" type="button" data-modal="settings" data-i18n="settings">Réglages</button><button class="secondary-btn" type="button" data-action="menu" data-i18n="mainMenu">Menu principal</button></div></div>
+    </section>
+
+    <section id="gameOverScreen" class="screen overlay-screen is-hidden" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
+      <div class="modal-card results-card"><span class="eyebrow" data-i18n="runComplete">SESSION TERMINÉE</span><h2 id="gameOverTitle" data-i18n="gameOver">Mission terminée</h2><div id="newRecord" class="record-badge is-hidden" data-i18n="newRecord">Nouveau record</div><div class="final-score"><span data-i18n="finalScore">Score final</span><strong id="finalScoreValue">0</strong></div><div id="resultsGrid" class="results-grid"></div><div class="result-actions"><button id="playAgainBtn" class="primary-btn" type="button" data-i18n="playAgain">Rejouer</button><button class="secondary-btn" type="button" data-modal="scores" data-i18n="highScores">Meilleurs scores</button><button class="secondary-btn" type="button" data-action="menu" data-i18n="mainMenu">Menu principal</button></div></div>
+    </section>
+
+    <section id="modal" class="screen overlay-screen is-hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-card info-card"><button id="modalClose" class="modal-close" type="button" aria-label="Fermer">×</button><span class="eyebrow">LEARN_TYPING // DATA</span><h2 id="modalTitle"></h2><div id="modalBody" class="modal-body"></div></div>
+    </section>
+
+    <div id="toastLayer" class="toast-layer" aria-live="polite"></div>
+  </div>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
