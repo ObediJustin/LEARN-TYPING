@@ -63,6 +63,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .field { display: grid; gap: 8px; color: var(--muted); font: 600 .68rem var(--font-display); letter-spacing: .16em; text-transform: uppercase; }
 .field select { width: 100%; appearance: none; border: 1px solid var(--line); border-radius: 2px; background: rgba(6,11,29,.86) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%2300f5ff'/%3E%3C/svg%3E") no-repeat calc(100% - 15px) center; padding: 13px 40px 13px 14px; color: var(--text); font: 500 .86rem var(--font-body); text-transform: none; letter-spacing: normal; }
 .field select:hover { border-color: rgba(0,245,255,.5); }
+.catalog-status { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:14px; padding:9px 12px; border:1px solid rgba(0,245,255,.12); background:rgba(0,245,255,.035); font:600 .62rem var(--font-display); letter-spacing:.1em; text-transform:uppercase; }
+.catalog-status span { color:var(--cyan); }.catalog-status strong { color:var(--muted); font-weight:500; }
 .mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 25px 0; padding: 0; border: 0; }
 .mode-picker legend { width: 100%; margin-bottom: 9px; color: var(--muted); font: 600 .68rem var(--font-display); letter-spacing: .16em; text-transform: uppercase; }
 .mode-card { position: relative; min-height: 68px; display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); background: rgba(8,14,33,.58); cursor: pointer; transition: .2s ease; }
