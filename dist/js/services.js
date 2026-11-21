@@ -1,11 +1,12 @@
 const STORAGE_KEY = 'learn_typing_save_v1';
 
 const DEFAULTS = {
-  version: 1,
-  settings: { language: 'fr', difficulty: 'normal', mode: 'classic', sound: true, ambience: true, volume: .55, reducedMotion: false, accentTolerance: true },
+  version: 2,
+  settings: { uiLanguage: 'fr', typingLanguage: 'fr', difficulty: 'normal', mode: 'classic', sound: true, ambience: true, volume: .55, reducedMotion: false, accentTolerance: true },
   scores: {},
   lifetime: { runs: 0, words: 0, destroyed: 0, correct: 0, incorrect: 0, seconds: 0 },
-  achievements: []
+  achievements: [],
+  vocabulary: {}
 };
 
 export class StorageService {
@@ -16,20 +17,29 @@ export class StorageService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return this.cloneDefaults();
       const parsed = JSON.parse(raw);
-      if (!parsed || parsed.version !== 1 || typeof parsed.settings !== 'object') return this.cloneDefaults();
+      if (!parsed || ![1,2].includes(parsed.version) || typeof parsed.settings !== 'object') return this.cloneDefaults();
+      const legacyLanguage=parsed.settings.language==='en'?'en':'fr';
+      const typingLanguage=parsed.settings.typingLanguage||legacyLanguage;
+      const scores={};
+      for(const [key,value] of Object.entries(parsed.scores||{})){
+        const migratedKey=key.split(':').length===2?`${typingLanguage}:${key}`:key;
+        scores[migratedKey]=Array.isArray(value)?value:[];
+      }
       return {
         ...this.cloneDefaults(), ...parsed,
-        settings: { ...DEFAULTS.settings, ...parsed.settings },
+        version: 2,
+        settings: { ...DEFAULTS.settings, ...parsed.settings, uiLanguage:parsed.settings.uiLanguage||legacyLanguage, typingLanguage },
         lifetime: { ...DEFAULTS.lifetime, ...parsed.lifetime },
-        scores: parsed.scores && typeof parsed.scores === 'object' ? parsed.scores : {},
-        achievements: Array.isArray(parsed.achievements) ? parsed.achievements.filter(x => typeof x === 'string') : []
+        scores,
+        achievements: Array.isArray(parsed.achievements) ? parsed.achievements.filter(x => typeof x === 'string') : [],
+        vocabulary: parsed.vocabulary && typeof parsed.vocabulary === 'object' ? parsed.vocabulary : {}
       };
     } catch { this.available = false; return this.cloneDefaults(); }
   }
   save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data)); return true; } catch { this.available = false; return false; } }
   setSettings(patch) { this.data.settings = { ...this.data.settings, ...patch }; this.save(); }
-  addScore(mode, difficulty, result) {
-    const key = `${mode}:${difficulty}`;
+  addScore(language, mode, difficulty, result) {
+    const key = `${language}:${mode}:${difficulty}`;
     const list = Array.isArray(this.data.scores[key]) ? this.data.scores[key] : [];
     const entry = { score: result.score, wave: result.wave, wpm: result.wpm, accuracy: result.accuracy, date: new Date().toISOString() };
     list.push(entry);
@@ -45,6 +55,25 @@ export class StorageService {
     this.save();
   }
   unlock(id) { if (this.data.achievements.includes(id)) return false; this.data.achievements.push(id); this.save(); return true; }
+  recordWordSuccess(language,word,difficulty) {this.recordVocabulary(language,word,difficulty,'correct');}
+  recordWordMistake(language,word,difficulty) {this.recordVocabulary(language,word,difficulty,'incorrect');}
+  recordVocabulary(language,word,difficulty,field) {
+    if(!language||!word)return;
+    const languageWords=this.data.vocabulary[language]||(this.data.vocabulary[language]={});
+    const entry=languageWords[word]||(languageWords[word]={difficulty,correct:0,incorrect:0,lastSeen:null});
+    entry.difficulty=difficulty||entry.difficulty;entry[field]=(Number(entry[field])||0)+1;entry.lastSeen=new Date().toISOString();this.save();
+  }
+  getVocabularySummary() {
+    const languages={};let encountered=0,mastered=0;
+    for(const [language,words] of Object.entries(this.data.vocabulary)){
+      const entries=Object.entries(words||{}).map(([word,value])=>({word,...value,total:(value.correct||0)+(value.incorrect||0)}));
+      const correct=entries.reduce((sum,entry)=>sum+(entry.correct||0),0),incorrect=entries.reduce((sum,entry)=>sum+(entry.incorrect||0),0);
+      const masteredWords=entries.filter(entry=>entry.correct>=3&&entry.correct/Math.max(1,entry.total)>=.9).length;
+      encountered+=entries.length;mastered+=masteredWords;
+      languages[language]={encountered:entries.length,mastered:masteredWords,accuracy:correct+incorrect?correct/(correct+incorrect)*100:100,mistakes:entries.filter(entry=>entry.incorrect>0).sort((a,b)=>b.incorrect-a.incorrect||b.total-a.total).slice(0,8)};
+    }
+    return {encountered,mastered,languages};
+  }
   reset() { this.data = this.cloneDefaults(); this.save(); }
 }
 

@@ -19,6 +19,7 @@
         <div class="brand-mini"><span class="brand-mark">LT</span><span>LEARN_TYPING</span></div>
         <div class="hud-stat score-stat"><span data-i18n="score">Score</span><strong id="scoreValue">000000</strong></div>
         <div class="hud-stat"><span data-i18n="wave">Vague</span><strong id="waveValue">01</strong></div>
+        <div class="hud-stat language-stat"><span data-i18n="typingLanguage">Langue de frappe</span><strong id="activeLanguageValue">FR</strong></div>
       </div>
       <div class="hud-cluster hud-metrics">
         <div class="hud-stat"><span data-i18n="combo">Combo</span><strong id="comboValue">×1</strong></div>
@@ -52,8 +53,9 @@
             <div><h2 id="setupTitle" data-i18n="missionSetup">Configuration de mission</h2><p data-i18n="setupHint">Choisis ton rythme et lance la séquence.</p></div>
           </div>
           <div class="field-row">
-            <label class="field"><span data-i18n="language">Langue</span><select id="languageSelect"><option value="fr">Français</option><option value="en">English</option></select></label>
+            <label class="field"><span data-i18n="interfaceLanguage">Langue de l’interface</span><select id="interfaceLanguageSelect"><option value="fr">Français</option><option value="en">English</option></select></label>
             <label class="field"><span data-i18n="difficulty">Difficulté</span><select id="difficultySelect"><option value="rookie" data-i18n="rookie">Recrue</option><option value="normal" data-i18n="normal">Normal</option><option value="expert" data-i18n="expert">Expert</option></select></label>
+            <label class="field typing-field"><span data-i18n="typingLanguage">Langue de frappe</span><select id="typingLanguageSelect"><option value="fr">Français</option><option value="en">English</option><option value="sw">Kiswahili</option><option value="es">Español</option><option value="pt">Português (Portugal)</option><option value="it">Italiano</option><option value="de">Deutsch</option><option value="tr">Türkçe</option><option value="id">Bahasa Indonesia</option><option value="nl">Nederlands</option><option value="pl">Polski</option><option value="ro">Română</option></select></label>
           </div>
           <fieldset class="mode-picker">
             <legend data-i18n="gameMode">Mode de jeu</legend>
@@ -66,6 +68,7 @@
           <nav class="menu-links" aria-label="Options">
             <button type="button" data-modal="how"><span>?</span><span data-i18n="howToPlay">Comment jouer</span></button>
             <button type="button" data-modal="scores"><span>⌁</span><span data-i18n="highScores">Meilleurs scores</span></button>
+            <button type="button" data-modal="vocabulary"><span>Aa</span><span data-i18n="vocabularyProgress">Progression vocabulaire</span></button>
             <button type="button" data-modal="settings"><span>⚙</span><span data-i18n="settings">Réglages</span></button>
           </nav>
         </section>

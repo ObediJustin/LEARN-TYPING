@@ -1,16 +1,16 @@
-import { WORDS, ENEMY_CONFIG, DIFFICULTY, ACHIEVEMENTS, t } from './data.js';
+import { ENEMY_CONFIG, DIFFICULTY, ACHIEVEMENTS, t } from './data.js';
 
 const TAU = Math.PI * 2;
 const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
 const pick = a => a[Math.floor(Math.random()*a.length)];
-const normalize = (value, tolerant) => tolerant ? value.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLocaleLowerCase() : value.toLocaleLowerCase();
+const normalize = (value, tolerant, locale) => tolerant ? value.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLocaleLowerCase(locale) : value.normalize('NFC').toLocaleLowerCase(locale);
 
 export class Game {
   constructor(canvas, services, callbacks={}) {
     this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha:false });
-    this.audio = services.audio; this.storage = services.storage; this.callbacks = callbacks;
+    this.audio = services.audio; this.storage = services.storage; this.words = services.words; this.callbacks = callbacks;
     this.settings = services.settings; this.state = 'menu'; this.last = performance.now(); this.loopStarted = false;
-    this.enemies=[]; this.particles=[]; this.lasers=[]; this.stars=[]; this.nebulas=[]; this.recentWords=[]; this.target=null;
+    this.enemies=[]; this.particles=[]; this.lasers=[]; this.stars=[]; this.nebulas=[]; this.target=null;
     this.shake=0; this.flash=0; this.playerHit=0; this.transition=0; this.spawnClock=0; this.hudClock=0; this.freezeUntil=0; this.doubleUntil=0; this.shield=0;
     this.resize = this.resize.bind(this); this.frame = this.frame.bind(this);
     window.addEventListener('resize', this.resize, {passive:true}); this.resize();
@@ -34,6 +34,7 @@ export class Game {
 
   start() {
     this.configure(this.storage.data.settings); this.state='transition'; this.enemies.length=0; this.particles.length=0; this.lasers.length=0; this.target=null;
+    this.words.startSession(this.seed ?? Date.now());
     this.stats={score:0,wave:1,combo:0,maxCombo:0,correct:0,incorrect:0,words:0,destroyed:0,bosses:0,elapsed:0,activeTime:0,wpm:0,accuracy:100,ended:false};
     this.spawnClock=0; this.spawned=0; this.killedInWave=0; this.bossSpawned=false; this.transition=2.15; this.freezeUntil=0; this.doubleUntil=0; this.shield=0; this.powerup=null;
     this.callbacks.onWave?.(1); this.audio.play('wave'); this.emitHUD(true);
@@ -91,7 +92,7 @@ export class Game {
     const max=diff.max+(this.settings.mode==='survival'?2:0);
     if (this.enemies.length>=max) {this.spawnClock=.4;return;}
     if (this.settings.mode==='classic' && this.stats.wave%5===0) {
-      if (!this.bossSpawned) {this.spawnEnemy('boss');this.bossSpawned=true;this.audio.play('boss');this.callbacks.onToast?.(t(this.settings.language,'bossIncoming'),'');}
+      if (!this.bossSpawned) {this.spawnEnemy('boss');this.bossSpawned=true;this.audio.play('boss');this.callbacks.onToast?.(t(this.settings.uiLanguage,'bossIncoming'),'');}
       this.spawnClock=99; return;
     }
     const quota=6+this.stats.wave*2;
@@ -104,56 +105,45 @@ export class Game {
     const w=this.stats.wave,r=Math.random();
     if(w>=4&&r<.1)return'phantom'; if(w>=3&&r<.28)return'tank'; if(w>=2&&r<.65)return'fighter'; return'scout';
   }
-  chooseCategory(type) {
-    const wave=this.stats.wave,d=this.settings.difficulty;
-    if(type==='boss')return wave>=10?'advanced':'long';
-    const bias=(d==='rookie'?-1:d==='expert'?1:0)+Math.floor((wave-1)/3);
-    if(type==='scout')return bias>=3?'medium':'short';
-    if(type==='tank')return bias>=3?'advanced':'long';
-    if(type==='phantom')return bias>=2?'advanced':'long';
-    return bias>=4?'long':bias>=1?'medium':'short';
-  }
   getWord(type) {
-    const lang=this.settings.language,list=WORDS[lang][this.chooseCategory(type)]||WORDS[lang].medium;
-    const available=list.filter(w=>!this.recentWords.includes(w)); const word=pick(available.length?available:list);
-    this.recentWords.push(word); if(this.recentWords.length>12)this.recentWords.shift(); return word;
+    return this.words.next({wave:this.stats.wave,difficulty:this.settings.difficulty,type,activeWords:this.enemies.map(enemy=>enemy.word)});
   }
   spawnEnemy(forcedType) {
     const type=forcedType||this.chooseType(),cfg=ENEMY_CONFIG[type],boss=type==='boss';
     const phases=boss?Array.from({length:Math.min(5,3+Math.floor(this.stats.wave/10))},()=>this.getWord(type)):[this.getWord(type)];
     const radius=cfg.radius,x=boss?this.width/2:radius+25+Math.random()*(this.width-radius*2-50);
-    this.enemies.push({id:crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`,type,x,y:boss?-80:-40-Math.random()*45,radius,speed:cfg.speed*(boss?45:52),score:cfg.score,color:cfg.color,phases,phase:0,word:phases[0],letters:Array.from(phases[0]),typed:0,age:0,wobble:Math.random()*TAU,drift:boss?4:8+Math.random()*10,dead:false});
+    this.enemies.push({id:crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`,type,x,y:boss?-80:-40-Math.random()*45,radius,speed:cfg.speed*(boss?45:52),score:cfg.score,color:cfg.color,phases,phase:0,word:phases[0].word,difficultyGroup:phases[0].group,letters:Array.from(phases[0].word),typed:0,age:0,wobble:Math.random()*TAU,drift:boss?4:8+Math.random()*10,dead:false});
   }
   enemyReached(index,e) {
     if(this.settings.mode==='practice') { if(this.target===e)this.target=null;this.burst(e.x,e.y,e.color,12);this.enemies.splice(index,1);return; }
-    if(this.shield>0) {this.shield=0;if(this.target===e)this.target=null;this.burst(e.x,e.y,'#00f5ff',22);this.enemies.splice(index,1);this.shake=5;this.callbacks.onToast?.(t(this.settings.language,'shieldSaved'),'');this.emitHUD(true);return;}
+    if(this.shield>0) {this.shield=0;if(this.target===e)this.target=null;this.burst(e.x,e.y,'#00f5ff',22);this.enemies.splice(index,1);this.shake=5;this.callbacks.onToast?.(t(this.settings.uiLanguage,'shieldSaved'),'');this.emitHUD(true);return;}
     this.playerHit=1; this.shake=12; this.burst(this.player.x,this.player.y,'#ff4560',44); this.endGame();
   }
   checkWave() {
     if(this.settings.mode!=='classic'||this.state!=='running')return;
     const quota=6+this.stats.wave*2, bossWave=this.stats.wave%5===0;
     if((bossWave&&this.bossSpawned&&this.enemies.length===0)||(!bossWave&&this.spawned>=quota&&this.enemies.length===0)) {
-      this.stats.score+=500*this.stats.wave; this.stats.wave++;this.spawned=0;this.killedInWave=0;this.bossSpawned=false;this.transition=2.15;this.state='transition';this.callbacks.onWave?.(this.stats.wave);this.callbacks.onToast?.(t(this.settings.language,'waveClear'),`+${500*(this.stats.wave-1)}`);this.audio.play('wave');
+      this.stats.score+=500*this.stats.wave; this.stats.wave++;this.spawned=0;this.killedInWave=0;this.bossSpawned=false;this.transition=2.15;this.state='transition';this.callbacks.onWave?.(this.stats.wave);this.callbacks.onToast?.(t(this.settings.uiLanguage,'waveClear'),`+${500*(this.stats.wave-1)}`);this.audio.play('wave');
     }
   }
   handleKey(event) {
     if(this.state==='paused') {if(event.key==='Escape'||event.key.toLowerCase()==='p'){event.preventDefault();this.resume();}return;}
     if(this.state!=='running')return; if(event.ctrlKey||event.altKey||event.metaKey||event.repeat)return;
     if(event.key==='Escape'||event.key==='Backspace') {
-      event.preventDefault(); if(this.target){this.target=null;this.callbacks.onToast?.(t(this.settings.language,'targetReleased'),'');}else if(event.key==='Escape')this.pause(); return;
+      event.preventDefault(); if(this.target){this.target=null;this.callbacks.onToast?.(t(this.settings.uiLanguage,'targetReleased'),'');}else if(event.key==='Escape')this.pause(); return;
     }
     if(event.key.toLowerCase()==='p'){event.preventDefault();this.pause();return;}
     if(Array.from(event.key).length!==1)return;
     event.preventDefault(); this.typeCharacter(event.key);
   }
   typeCharacter(char) {
-    const tolerant=this.settings.accentTolerance,typed=normalize(char,tolerant);
+    const tolerant=this.settings.accentTolerance,locale=this.words.dictionary.locale,typed=normalize(char,tolerant,locale);
     if(!this.target) {
-      const eligible=this.enemies.filter(e=>normalize(e.letters[e.typed]||'',tolerant)===typed).sort((a,b)=>b.y-a.y);
+      const eligible=this.enemies.filter(e=>normalize(e.letters[e.typed]||'',tolerant,locale)===typed).sort((a,b)=>b.y-a.y);
       if(eligible.length)this.target=eligible[0];
     }
     if(!this.target){this.miss();return;}
-    const expected=normalize(this.target.letters[this.target.typed]||'',tolerant);
+    const expected=normalize(this.target.letters[this.target.typed]||'',tolerant,locale);
     if(typed!==expected){this.miss();return;}
     const e=this.target; e.typed++; e.y=Math.max(-20,e.y-6);this.stats.correct++;this.stats.combo++;this.stats.maxCombo=Math.max(this.stats.maxCombo,this.stats.combo);
     const multiplier=Math.min(8,1+Math.floor(this.stats.combo/8)),double=performance.now()/1000<this.doubleUntil?2:1;
@@ -162,16 +152,17 @@ export class Game {
     for(let i=0;i<3;i++)this.particles.push({x:e.x+(Math.random()-.5)*10,y:e.y+(Math.random()-.5)*10,vx:(Math.random()-.5)*80,vy:(Math.random()-.5)*80,life:.2+Math.random()*.2,max:.4,color:e.color,size:1+Math.random()*2});
     if(e.typed>=e.letters.length)this.completeWord(e);this.emitHUD(true);
   }
-  miss() {this.stats.incorrect++;this.stats.combo=0;this.flash=.4;this.shake=2;this.audio.play('error');this.callbacks.onError?.();this.emitHUD(true);}
+  miss() {this.stats.incorrect++;this.stats.combo=0;if(this.target)this.storage.recordWordMistake(this.settings.typingLanguage,this.target.word,this.target.difficultyGroup);this.flash=.4;this.shake=2;this.audio.play('error');this.callbacks.onError?.();this.emitHUD(true);}
   completeWord(e) {
     this.stats.words++; const double=performance.now()/1000<this.doubleUntil?2:1;
+    this.storage.recordWordSuccess(this.settings.typingLanguage,e.word,e.difficultyGroup);
     this.stats.score+=Math.round((e.word.length*18+e.score)*double*DIFFICULTY[this.settings.difficulty].score);
-    if(e.type==='boss'&&e.phase<e.phases.length-1) {e.phase++;e.word=e.phases[e.phase];e.letters=Array.from(e.word);e.typed=0;e.y=Math.max(85,e.y-28);this.target=e;this.burst(e.x,e.y,e.color,24);return;}
+    if(e.type==='boss'&&e.phase<e.phases.length-1) {e.phase++;const next=e.phases[e.phase];e.word=next.word;e.difficultyGroup=next.group;e.letters=Array.from(e.word);e.typed=0;e.y=Math.max(85,e.y-28);this.target=e;this.burst(e.x,e.y,e.color,24);return;}
     this.destroyEnemy(e,true);
   }
   destroyEnemy(e,earned) {
     const idx=this.enemies.indexOf(e);if(idx<0)return;this.enemies.splice(idx,1);if(this.target===e)this.target=null;
-    this.stats.destroyed++;if(e.type==='boss'){this.stats.bosses++;this.stats.score+=1500;this.callbacks.onToast?.(t(this.settings.language,'defeated'),'+1500');}
+    this.stats.destroyed++;if(e.type==='boss'){this.stats.bosses++;this.stats.score+=1500;this.callbacks.onToast?.(t(this.settings.uiLanguage,'defeated'),'+1500');}
     this.burst(e.x,e.y,e.color,e.type==='boss'?70:25);this.audio.play('explode');this.shake=e.type==='boss'?9:3;
     if(earned&&this.stats.words%7===0)this.grantPowerup();this.checkAchievements(false);
   }
@@ -181,7 +172,7 @@ export class Game {
     if(type==='double')this.doubleUntil=now+10;
     if(type==='shield')this.shield=1;
     let affected=0;if(type==='emp') {const victims=[...this.enemies].filter(e=>e.type!=='boss').sort((a,b)=>b.y-a.y).slice(0,3);affected=victims.length;victims.forEach(e=>this.destroyEnemy(e,false));this.powerup=null;}
-    this.audio.play('power');this.callbacks.onToast?.(t(this.settings.language,type),type==='emp'?`-${affected}`:'');this.emitHUD(true);
+    this.audio.play('power');this.callbacks.onToast?.(t(this.settings.uiLanguage,type),type==='emp'?`-${affected}`:'');this.emitHUD(true);
   }
   burst(x,y,color,count) {for(let i=0;i<count;i++){const a=Math.random()*TAU,s=30+Math.random()*180;this.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.35+Math.random()*.65,max:1,color,size:1+Math.random()*3.5});}}
   getAccuracy(){const total=this.stats.correct+this.stats.incorrect;return total?this.stats.correct/total*100:100;}
@@ -195,7 +186,7 @@ export class Game {
   endGame() {
     if(this.state==='over')return;this.state='over';this.stats.ended=true;this.stats.accuracy=this.getAccuracy();this.stats.wpm=this.getWpm();this.checkAchievements(true);this.audio.play('over');
     const result={...this.stats,wpm:Math.round(this.stats.wpm),accuracy:Math.round(this.stats.accuracy)};
-    const record=this.settings.mode!=='practice'&&this.storage.addScore(this.settings.mode,this.settings.difficulty,result);this.storage.addLifetime(result);this.callbacks.onOver?.(result,record);
+    const record=this.settings.mode!=='practice'&&this.storage.addScore(this.settings.typingLanguage,this.settings.mode,this.settings.difficulty,result);this.storage.addLifetime(result);this.callbacks.onOver?.(result,record);
   }
 
   render(time) {
