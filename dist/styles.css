@@ -101,9 +101,12 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .powerup-badge { height: 38px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--magenta); padding: 0 13px; background: rgba(255,43,214,.08); color: var(--magenta); font: 600 .7rem var(--font-display); text-transform: uppercase; letter-spacing: .08em; }
 
 .wave-banner { position: absolute; z-index: 11; left: 50%; top: 48%; translate: -50% -50%; display: grid; place-items: center; text-transform: uppercase; animation: bannerIn 2s both; pointer-events: none; }
+.wave-banner::before, .wave-banner::after { content:''; position:absolute; top:50%; width:clamp(60px,10vw,150px); height:1px; background:linear-gradient(90deg,transparent,var(--cyan)); box-shadow:0 0 12px rgba(0,245,255,.5); }
+.wave-banner::before { right:calc(100% + 28px); }.wave-banner::after { left:calc(100% + 28px); transform:scaleX(-1); }
 .wave-banner span { color: var(--cyan); font: 600 1rem var(--font-display); letter-spacing: .5em; }
 .wave-banner strong { font: 700 7rem/.9 var(--font-display); color: transparent; -webkit-text-stroke: 2px var(--text); text-shadow: 0 0 45px rgba(0,245,255,.4); }
 .wave-banner small { margin-top: 13px; color: var(--muted); font: 600 .7rem var(--font-display); letter-spacing: .25em; }
+.wave-banner.boss-wave span, .wave-banner.boss-wave small { color:var(--red); }.wave-banner.boss-wave strong { -webkit-text-stroke-color:var(--red); text-shadow:0 0 55px rgba(255,69,96,.55); }.wave-banner.boss-wave::before, .wave-banner.boss-wave::after { background:linear-gradient(90deg,transparent,var(--red)); box-shadow:0 0 14px rgba(255,69,96,.55); }
 .combo-burst { position: absolute; z-index: 13; left: 50%; top: 25%; translate: -50% -50%; display: grid; place-items: center; pointer-events: none; animation: comboBurst .9s ease both; }
 .combo-burst span { color: var(--magenta); font: 700 .72rem var(--font-display); letter-spacing: .35em; text-shadow: 0 0 15px var(--magenta); }
 .combo-burst strong { color: var(--text); font: 700 3.4rem/.9 var(--font-display); text-shadow: 0 0 24px var(--magenta); }

@@ -14,7 +14,7 @@ const ui = {
   app: $('#app'), menu: $('#menu'), hud: $('#hud'), pause: $('#pauseScreen'), over: $('#gameOverScreen'), modal: $('#modal'),
   score: $('#scoreValue'), wave: $('#waveValue'), combo: $('#comboValue'), wpm: $('#wpmValue'), accuracy: $('#accuracyValue'),
   timerStat: $('#timerStat'), timer: $('#timerValue'), power: $('#powerupBadge'), powerText: $('#powerupText'), powerIcon: $('#powerupIcon'),
-  interfaceLanguage: $('#interfaceLanguageSelect'), typingLanguage: $('#typingLanguageSelect'), difficulty: $('#difficultySelect'), waveBanner: $('#waveBanner'), waveBannerValue: $('#waveBannerValue'), activeLanguage: $('#activeLanguageValue'),
+  interfaceLanguage: $('#interfaceLanguageSelect'), typingLanguage: $('#typingLanguageSelect'), difficulty: $('#difficultySelect'), waveBanner: $('#waveBanner'), waveBannerValue: $('#waveBannerValue'), waveBannerHint: $('#waveBannerHint'), activeLanguage: $('#activeLanguageValue'),
   finalScore: $('#finalScoreValue'), results: $('#resultsGrid'), newRecord: $('#newRecord'), modalTitle: $('#modalTitle'), modalBody: $('#modalBody'),
   sound: $('#soundBtn'), toast: $('#toastLayer'), comboBurst: $('#comboBurst'), comboBurstValue: $('#comboBurstValue')
 };
@@ -74,7 +74,7 @@ function showCombo(multiplier){clearTimeout(comboTimer);ui.comboBurstValue.textC
 
 let waveTimer;
 function showWave(wave) {
-  clearTimeout(waveTimer);ui.waveBannerValue.textContent=wave;ui.waveBanner.classList.remove('is-hidden');
+  clearTimeout(waveTimer);const bossWave=wave%5===0;ui.waveBannerValue.textContent=wave;ui.waveBannerHint.textContent=t(settings.uiLanguage,bossWave?'bossIncoming':'getReady');ui.waveBanner.classList.add('is-hidden');ui.waveBanner.classList.toggle('boss-wave',bossWave);void ui.waveBanner.offsetWidth;ui.waveBanner.classList.remove('is-hidden');
   waveTimer=setTimeout(()=>ui.waveBanner.classList.add('is-hidden'),2050);
 }
 
