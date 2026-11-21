@@ -94,6 +94,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .hud-stat span { color: var(--muted); font: 500 .58rem var(--font-display); letter-spacing: .12em; text-transform: uppercase; }
 .hud-stat strong { font: 600 1.12rem var(--font-display); letter-spacing: .04em; }
 .score-stat strong { color: var(--cyan); }
+.score-pop { animation: scorePop .24s ease; }
 .hud-actions { display: flex; align-items: center; gap: 8px; }
 .icon-btn { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line); background: rgba(9,15,34,.7); color: var(--muted); font: 600 1rem var(--font-display); }
 .icon-btn:hover { border-color: var(--cyan); color: var(--cyan); }
@@ -103,6 +104,9 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .wave-banner span { color: var(--cyan); font: 600 1rem var(--font-display); letter-spacing: .5em; }
 .wave-banner strong { font: 700 7rem/.9 var(--font-display); color: transparent; -webkit-text-stroke: 2px var(--text); text-shadow: 0 0 45px rgba(0,245,255,.4); }
 .wave-banner small { margin-top: 13px; color: var(--muted); font: 600 .7rem var(--font-display); letter-spacing: .25em; }
+.combo-burst { position: absolute; z-index: 13; left: 50%; top: 25%; translate: -50% -50%; display: grid; place-items: center; pointer-events: none; animation: comboBurst .9s ease both; }
+.combo-burst span { color: var(--magenta); font: 700 .72rem var(--font-display); letter-spacing: .35em; text-shadow: 0 0 15px var(--magenta); }
+.combo-burst strong { color: var(--text); font: 700 3.4rem/.9 var(--font-display); text-shadow: 0 0 24px var(--magenta); }
 
 .overlay-screen { z-index: 20; display: grid; place-items: center; padding: 24px; background: rgba(2,4,13,.76); backdrop-filter: blur(9px); }
 .modal-card { position: relative; width: min(520px, 100%); padding: clamp(30px,5vw,54px); border: 1px solid rgba(0,245,255,.24); background: linear-gradient(145deg, rgba(15,24,55,.98), rgba(5,9,25,.98)); box-shadow: 0 35px 90px rgba(0,0,0,.55), 0 0 45px rgba(0,245,255,.08); clip-path: polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px); }
@@ -158,6 +162,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 @keyframes toastIn { from { opacity:0; transform:translateX(20px); } }
 @keyframes shake { 25% { transform:translate(5px,-2px); } 50% { transform:translate(-4px,2px); } 75% { transform:translate(3px,1px); } }
 @keyframes fadeOut { to { opacity:0; } }
+@keyframes scorePop { 45% { color:#fff; transform:scale(1.13); text-shadow:0 0 18px var(--cyan); } }
+@keyframes comboBurst { 0% { opacity:0; transform:scale(.65); } 25% { opacity:1; transform:scale(1.08); } 70% { opacity:1; transform:scale(1); } 100% { opacity:0; transform:translateY(-18px) scale(1.05); } }
 
 @media (max-width: 980px) {
   .app-shell { min-height: 520px; }

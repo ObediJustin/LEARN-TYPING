@@ -16,7 +16,7 @@ const ui = {
   timerStat: $('#timerStat'), timer: $('#timerValue'), power: $('#powerupBadge'), powerText: $('#powerupText'), powerIcon: $('#powerupIcon'),
   interfaceLanguage: $('#interfaceLanguageSelect'), typingLanguage: $('#typingLanguageSelect'), difficulty: $('#difficultySelect'), waveBanner: $('#waveBanner'), waveBannerValue: $('#waveBannerValue'), activeLanguage: $('#activeLanguageValue'),
   finalScore: $('#finalScoreValue'), results: $('#resultsGrid'), newRecord: $('#newRecord'), modalTitle: $('#modalTitle'), modalBody: $('#modalBody'),
-  sound: $('#soundBtn'), toast: $('#toastLayer')
+  sound: $('#soundBtn'), toast: $('#toastLayer'), comboBurst: $('#comboBurst'), comboBurstValue: $('#comboBurstValue')
 };
 
 const powerIcons = {freeze:'❄',shield:'◇',double:'×2',emp:'ϟ'};
@@ -28,6 +28,7 @@ const game = new Game($('#gameCanvas'), {audio,storage,words,settings}, {
   onOver:showGameOver,
   onError:()=>{ui.app.classList.remove('error-flash');void ui.app.offsetWidth;ui.app.classList.add('error-flash');setTimeout(()=>ui.app.classList.remove('error-flash'),260);},
   onToast:(title,body)=>toast(title,body),
+  onCombo:(multiplier)=>showCombo(multiplier),
   onAchievement:id=>toast(t(settings.uiLanguage,'achievement'),t(settings.uiLanguage,id))
 });
 
@@ -58,12 +59,18 @@ function returnMenu() {
   game.returnToMenu();ui.hud.classList.add('is-hidden');ui.pause.classList.add('is-hidden');ui.over.classList.add('is-hidden');ui.modal.classList.add('is-hidden');ui.menu.classList.remove('is-hidden');
 }
 
+let previousScore=0;
 function updateHUD(s) {
+  if(s.score===0)previousScore=0;
+  if(s.score>previousScore){ui.score.classList.remove('score-pop');void ui.score.offsetWidth;ui.score.classList.add('score-pop');}previousScore=s.score;
   ui.score.textContent=String(Math.floor(s.score)).padStart(6,'0');ui.wave.textContent=String(s.wave).padStart(2,'0');ui.combo.textContent=`×${s.multiplier}`;ui.wpm.textContent=String(Math.round(s.wpm));ui.accuracy.textContent=`${Math.round(s.accuracy)}%`;
   if(s.timeLeft!==null)ui.timer.textContent=String(Math.ceil(s.timeLeft));
   const active=s.powerup||s.shield?{type:s.powerup?.type||'shield'}:null;ui.power.classList.toggle('is-hidden',!active);
   if(active){ui.powerIcon.textContent=powerIcons[active.type]||'✦';const duration=s.powerTime?` ${Math.ceil(s.powerTime)}s`:'';ui.powerText.textContent=`${t(settings.uiLanguage,active.type)}${duration}`;}
 }
+
+let comboTimer;
+function showCombo(multiplier){clearTimeout(comboTimer);ui.comboBurstValue.textContent=`×${multiplier}`;ui.comboBurst.classList.add('is-hidden');void ui.comboBurst.offsetWidth;ui.comboBurst.classList.remove('is-hidden');comboTimer=setTimeout(()=>ui.comboBurst.classList.add('is-hidden'),900);}
 
 let waveTimer;
 function showWave(wave) {
