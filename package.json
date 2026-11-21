@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "LEARN_TYPING — bilingual neon typing arcade game",
+  "description": "LEARN_TYPING — multilingual neon typing arcade game",
   "scripts": {
     "serve": "npx serve dist",
     "check": "node --check dist/js/data.js && node --check dist/js/services.js && node --check dist/js/word-manager.js && node --check dist/js/game.js && node --check dist/js/main.js && node tests/validate.mjs"
